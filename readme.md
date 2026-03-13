@@ -147,6 +147,17 @@ The `memory/`, `learnings/`, and `docs/` directories contain extensive research:
 - This bot interacts with real money. Paper trade extensively before going live
 - Dynamic taker fees (up to 3.15% at 50c) kill latency arbitrage strategies
 
+## Support the Project
+
+If this code, research, or the honest post-mortem saved you time or money — consider buying me a coffee.
+
+| Coin | Network | Address |
+|------|---------|---------|
+| **USDC** | Polygon | `YOUR_POLYGON_ADDRESS` |
+| **ETH** | Ethereum | `YOUR_ETH_ADDRESS` |
+| **BTC** | Bitcoin | `YOUR_BTC_ADDRESS` |
+| **SOL** | Solana | `YOUR_SOL_ADDRESS` |
+
 ## License
 
 [MIT](LICENSE)
