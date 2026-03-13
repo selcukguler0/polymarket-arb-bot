@@ -1,0 +1,293 @@
+# 5m rebuild shadow profile.
+# This is the first non-live track for the 5m-first paired-engine rebuild.
+#
+# Orchestrator Configuration
+#
+# Base config from [general], [strategy], [risk], [timing], [alerting]
+# plus [v2] for strategy-specific parameters.
+
+[general]
+mode = "shadow"  # "paper", "live", or "shadow"
+db_path = "data/polymarket-arb-shadow.db"
+eoa_mode = true  # Use EOA signing (type 0) — enables on-chain merge/split/redeem
+canary_mode = false
+canary_budget = "20"
+canary_periods = 99999
+
+[strategy]
+min_profit_threshold = "0.02"    # Minimum guaranteed profit per pair ($0.02)
+max_combined_bid = "0.98"        # Max YES+NO combined bid (hard ceiling)
+order_size_usdc = "10.00"         # USDC per order (used by v1, v2 uses base_order_shares)
+max_orders_per_side = 3          # Max resting orders per outcome per market
+ticks_below_mid = 2              # V1 only: how far below midpoint to place bids
+aggressiveness = "0.5"           # V1 only: 0.0 ultra conservative to 1.0 max edge
+
+[risk]
+max_position_per_market = "75.00"
+max_total_exposure = "150.00"
+max_imbalance_ratio = "0.60"       # Max heavy_side / total
+pause_imbalance_ratio = "0.70"     # Pause quoting overweight side
+emergency_imbalance_ratio = "0.80" # Actively sell excess
+daily_loss_limit = "50.00"
+resolution_safety_margin_secs = 20
+
+[timing]
+max_book_age_ms = 1500
+quote_refresh_ms = 500
+health_check_interval_secs = 5
+market_discovery_interval_secs = 5
+
+[alerting]
+enabled = false
+max_alerts_per_5min = 5
+
+# ── V2-specific parameters ──────────────────────────────────────────
+[v2]
+# Fair-value pricing
+target_combined = "0.95"
+min_bid = "0.04"
+
+# Combined cost guard (hard cap on per-order combined cost)
+max_combined_avg_cost = "1.00"
+
+# Light-side combined cost guard: when imbalanced, the side we need to complete
+# pairs uses this cap instead of $1.00. Prevents creating breakeven/losing pairs.
+light_side_max_combined = "1.02"
+
+# Merge profit floor: skip merge if profit per pair < this (avoids realizing losses)
+merge_min_profit_per_pair = "0.005" # 0.5c/pair minimum — never merge at a loss
+
+# Position balancing
+max_share_imbalance = "20"
+imbalance_skew_per_share = "0.008" # Stronger skew away from heavy side (0.8c/share)
+
+# Volatility filter
+min_vol_per_sec = "0.00001"      # Min realized vol to trade (~1 bps/sec)
+vol_window_secs = 120            # Rolling window for vol estimation
+
+# Sell-back engine
+sellback_edge = "0.01"           # Sell at avg_cost + this edge (patient mode)
+sellback_min_excess = "99999"    # Disabled for the first 5m rebuild pass.
+sell_level_size = "5"
+sell_levels = 2
+
+# Exit escalation policy (Phase 1: raise thresholds to let skewing work first)
+exit_soft_excess = "40"                 # Phase 1: was 15. Let inventory skew handle gaps up to 40 shares.
+exit_hard_excess = "60"                 # Phase 1: was 30. Only escalate to taker above 60-share gap.
+exit_taker_after_secs = 12              # Escalate to taker sooner when breaker persists
+exit_force_taker_remaining_secs = 15    # Phase 1: was 360. Only fire very late — last 15 seconds.
+ev_log_cooldown_secs = 5                # Rate-limit EV breaker warnings per market
+pair_completion_retry_secs = 2
+pair_completion_max_attempts = 16
+
+# Sizing & ladder shape
+base_order_shares = "5"
+ladder_levels = 12
+ladder_size_decay = "0.00"
+
+# Quote refresh (overrides timing.quote_refresh_ms)
+quote_refresh_ms = 500           # 500ms for v2 (2x faster than v1)
+
+# ── V2 Risk Improvements ──────────────────────────────────────────
+
+# EV circuit breaker: stop buying when directional risk exceeds locked profit
+ev_circuit_breaker_enabled = false  # DISABLED: winners accept 44% losing periods. EV breaker would suppress fills. (was true)
+ev_stop_buying_ratio = "0.7"
+ev_min_excess_threshold = "5.0"
+ev_early_period_multiplier = "3.0"
+ev_early_period_end_pct = 0.50
+
+# FV dead-zone: stop bidding on near-worthless tokens
+fv_dead_threshold = "0.10"       # Stop bidding when FV < 10%
+min_bid_absolute_floor = "0.02"  # Never bid below 2c
+min_bid_fv_ratio = "0.5"         # Dynamic min_bid = max(fv * this, absolute_floor)
+
+# Time-decaying imbalance: limits shrink as resolution approaches
+imbalance_decay_floor_abs = "12"
+imbalance_decay_floor_soft = "4"
+very_late_phase_secs = 60
+
+# Anti-oscillation: prevent buy-sell churn
+postonly_regen_buffer_ticks = 3  # Phase 1: moves level 0 from ask-2c to ask-3c. Breakeven 50% WR vs actual 51.2%. (was 2, was 1)
+sell_buy_cooldown_secs = 20      # Longer cooldown reduces sell-then-rebuy churn
+
+# Sell-back grace period: suppress sell-back for the first N seconds
+# Allows the bot to focus on pair accumulation before trimming excess
+sellback_grace_period_secs = 15           # 15s after first order placed (was 60s from period start — observation window now handles pair accumulation time)
+sellback_protect_locked_profit = false   # DISABLED: was creating deadlock with max_share_imbalance via light_side_has_buys guard
+sellback_max_loss_cents = "0.05"         # Allow deeper cuts to escape (was 0.03)
+
+# Trending market detection: suppress buying the losing side in strong trends.
+# For arb, both sides MUST fill — trend filter at $25 blocks one side during
+# normal volatility, guaranteeing one-sided fills.  Raised to only trigger on
+# extreme flash crashes while allowing arb pair formation during trends.
+trend_window_secs = 30                   # 30-second rolling window for trend detection
+trend_threshold_dollars = 250.0
+trend_threshold_5m = 250.0
+trend_threshold_15m = 300.0
+trend_threshold_60m = 500.0
+
+# Post-anchoring inventory skew (Phase 1 Change 2): shift heavy-side ladder
+# deeper after ask-anchoring to discourage accumulation on the wrong side.
+post_anchor_skew_enabled = true
+skew_activation_threshold = "5"         # Matches base_order_shares — skew kicks in after 1 order fill
+shares_per_skew_tick = "5"              # Every 5 excess shares = 1 tick deeper
+max_skew_ticks = 15                     # Cap at 15 ticks ($0.15)
+
+# Price-shock fast-path wakeup (Phase 1 Change 4): wake orchestrator
+# immediately on large Binance price moves instead of waiting for next timer tick.
+price_shock_threshold_5m = 15.0         # Dollars: wake up on $15+ move for 5-min markets
+price_shock_threshold_15m = 40.0        # Dollars: wake up on $40+ move for 15-min markets
+price_shock_threshold_60m = 100.0       # Dollars: wake up on $100+ move for 1-hour markets
+price_shock_use_cancel_all = false
+
+# Duration-aware ladder levels (Phase 1 Change 5): fewer levels for shorter markets.
+ladder_levels_5m = 12
+ladder_levels_15m = 2
+ladder_levels_60m = 4
+buy_level_activation_limit_5m = 3
+
+# FV-stale cancel: cancel all resting on a side when FV shifts away
+fv_stale_cancel_cents = "0.05"
+
+# Sigma blending: blend 1-minute vol with full-window vol for faster response
+sigma_blend_alpha = "0.4"               # 0.0 = pure full-window, 1.0 = pure 1-minute
+
+# Volatility circuit breaker: suppress new orders in high-vol regimes
+# BTC range > $120 → 0 wins in 6 periods (-$29). Calm periods → 4/4 wins (+$7).
+max_sigma = 0.00020
+max_sigma_resume_factor = 0.85
+
+# Fee-aware pair completion: buffer for fees when crossing the spread
+pair_fee_buffer = "0.03"                # Accept pairs at combined cost < 1.00 - this
+
+# Ladder churn reduction: skip cancel/replace if centers haven't moved enough
+ladder_reprice_threshold = "0.03"       # 3c minimum center movement to trigger reprice (was 1c — every tick triggered cancel/replace)
+
+# One-sided position guard threshold
+one_sided_threshold = "20"
+
+# Period-level risk caps (Phase 2)
+period_gross_buy_cap_usdc = "90.0"
+early_phase_pct = 0.10
+early_phase_gross_buy_cap_usdc = "30.0"
+period_worst_case_loss_cap_usdc = "8.0"
+single_order_notional_cap_usdc = "6.0"
+period_pair_quality_min_pairs = "20"        # Only evaluate pair-quality hysteresis after this many pairs
+period_pair_quality_max_combined = "1.10"   # Effectively disabled: winners accept >1.0 combined 44% of the time. (was 1.00)
+period_pair_quality_resume_combined = "1.05" # Relaxed accordingly. (was 0.98)
+pair_ratio_eval_min_total_shares = "60"     # Minimum inventory before pair-ratio guard evaluates
+period_min_pair_ratio_for_heavy_add = 0.35 # If too one-sided after early phase, block heavy-side adds
+
+# Hybrid FV: blend BS fair value with book midpoint
+fv_book_blend_weight = "0.50"           # 50% book-informed, 50% BS model — keeps bids closer to market
+
+# Late-entry guard: skip markets already deep into their period
+min_period_remaining_pct = 0.90
+
+# Trading window: observe first, then trade in a focused window
+trading_window_start_pct = 0.03
+trading_window_end_pct = 0.95
+wind_down_allow_pair_completion = true  # During wind-down (60%+), allow pair-completion buys on light side.
+
+# Market duration filter
+allowed_durations = [5]
+
+# Sigma warm-up: minimum samples before trading
+min_sigma_samples = 20                  # Wait for 20 vol samples (~10 seconds)
+
+# Market warmup: minimum seconds after discovery before placing orders
+# Ensures WS orderbook has connected and delivered meaningful depth
+market_warmup_secs = 2
+
+# Circuit breakers
+max_orders_per_minute = 240
+kill_file_path = "/tmp/gabagool_shadow_kill"
+
+# ── New Safety Guards (recommended) ────────────────────────────────
+# Asset-local auto guard: pause new bids when rolling performance degrades.
+asset_guard_enabled = false
+asset_guard_window_periods = 6          # Evaluate last 6 completed periods
+asset_guard_min_fill_rate = 0.15        # Paper sim fill rates are lower with wider ladders. Was 0.40 — triggered on profitable assets.
+asset_guard_min_rolling_pnl = "-2.0"    # Trigger if rolling PnL over window drops below -$2
+asset_guard_pause_secs = 600            # Pause new bids for 10 minutes (was 15m — killed 2 full periods, now only ~2/3 of a period)
+
+# Cancel-churn breaker: dampen repricing when cancel ratio spikes.
+churn_breaker_enabled = true
+churn_breaker_min_orders = 20
+churn_breaker_cancel_ratio = 0.60
+churn_breaker_reprice_multiplier = 3
+churn_breaker_keep_levels = 4
+
+# Emergency sell cooldown: avoid repeated panic sells in the same market.
+emergency_sell_cooldown_secs = 12
+
+# Merge complete pairs on-chain during Closing phase (requires eoa_mode + live mode)
+merge_at_closing = false
+
+# ── Dynamic Rebalancing ──────────────────────────────────────────────
+# Allow extra budget for light-side buying when imbalanced (pair completion)
+rebalance_budget_override = true
+rebalance_max_extra_budget = "10"
+rebalance_size_multiplier = 1
+
+# ── Continuous Merge ─────────────────────────────────────────────────
+# Merge completed pairs mid-period to free USDC for more pair accumulation
+continuous_merge_enabled = false
+merge_interval_secs = 30                # Minimum seconds between merge attempts
+merge_min_pairs = 15
+merge_reserve_pairs = 3
+
+# ── VPIN Toxic Flow Detection ──────────────────────────────────────
+vpin_enabled = false
+vpin_bucket_volume = 30.0
+vpin_n_buckets = 10
+vpin_widen_threshold = 0.50
+vpin_pullback_threshold = 0.70
+vpin_max_spread_multiplier = 3.0
+
+# ── Avellaneda-Stoikov Volatility-Scaled Skew ─────────────────────
+as_skew_enabled = false
+as_gamma = 0.1
+
+# ── Continuous Liquidity Tapering ─────────────────────────────────
+taper_enabled = false
+taper_min_factor = 0.10
+
+# ── Randomized Skew Noise ─────────────────────────────────────────
+skew_noise_enabled = false
+skew_noise_amplitude = 0.3
+
+# ── On-chain Contract Addresses ────────────────────────────────────
+# Defaults to current Polygon mainnet addresses. Update here when USDC.e migrates.
+[onchain]
+usdc_address = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+ctf_exchange_address = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E"
+neg_risk_ctf_exchange_address = "0xC5d563A36AE78145C45a50134d48A1215220f80a"
+
+# ── Per-Asset Configuration ─────────────────────────────────────────
+# Fields here override [v2] defaults for that specific asset.
+# Omitted fields fall back to the [v2] section values.
+
+[btc]
+enabled = true
+budget = "75.00"
+ladder_levels = 12
+
+[eth]
+enabled = false
+budget = "0"
+
+[sol]
+enabled = false
+budget = "0"
+max_sigma = 0.00050            # SOL ~2.5x more volatile than BTC
+base_order_shares = "10"       # Thinner books, smaller orders
+ladder_levels = 10             # SOL supports fewer levels
+
+[xrp]
+enabled = false
+budget = "0"
+max_sigma = 0.00040
+base_order_shares = "10"       # Thinnest book — smaller orders
+ladder_levels = 8              # XRP has shallowest books

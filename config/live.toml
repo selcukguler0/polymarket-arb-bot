@@ -1,0 +1,287 @@
+# ═══════════════════════════════════════════════════════════════════════
+# LIVE CONFIG — BTC-Only Canary Deploy (Baseline)
+# ═══════════════════════════════════════════════════════════════════════
+# Validated: 688 periods paper trading (commit 749d571)
+#   - BTC: Sharpe 0.626, $7.70/period, 76% WR — best of all coins
+#   - Pure arbitrage: locked pairs = 193% of PnL, speculation = -93%
+#   - Survived -$113 flash event at US market open, recovered in 2 periods
+#
+# Config aligned with validated paper baseline (2026-03-02):
+#   - postonly_regen_buffer_ticks: 3 (was 5 — 688p validated)
+#   - ladder_levels_15m: 10 (was 0 — enables $7.86/period 15-min markets)
+#   - fv_stale_cancel_cents: 0.08 (was 0.12 — match baseline)
+#   - VPIN/AS-Skew/Taper/Noise: ALL DISABLED (paper sim shows regression)
+#   - quote_refresh_ms: 1000 (vs 500 paper — latency safety margin)
+#
+# Canary phase: $50 max exposure, 10 consecutive winners to auto-escalate
+# To revert to paper: switch mode = "paper" or just use config/v2.toml
+# To enable other coins: set enabled = true in [eth]/[sol]/[xrp] sections
+# ═══════════════════════════════════════════════════════════════════════
+
+[general]
+mode = "live"
+db_path = "data/polymarket-arb.db"
+eoa_mode = true
+canary_mode = true
+canary_budget = "50"              # $50 max exposure per asset during canary phase
+canary_periods = 10               # Auto-escalate to full budget after 10 consecutive profitable periods (conservative for first live)
+
+[strategy]
+min_profit_threshold = "0.02"
+max_combined_bid = "0.98"
+order_size_usdc = "10.00"
+max_orders_per_side = 3
+ticks_below_mid = 2
+aggressiveness = "0.5"
+
+[risk]
+max_position_per_market = "75.00"     # LIVE: tight cap. Positions resolve each period, no pile-up.
+max_total_exposure = "140.00"         # LIVE: BTC-only ceiling. Single asset, no need for multi-asset headroom.
+max_imbalance_ratio = "0.60"
+pause_imbalance_ratio = "0.70"
+emergency_imbalance_ratio = "0.80"
+daily_loss_limit = "50.00"            # LIVE: paper BTC worst single period was -$39.45 live, -$31.67 paper. $15 was too tight — killed bot after 1 bad period. $50 allows recovery.
+resolution_safety_margin_secs = 120
+
+[timing]
+max_book_age_ms = 1500
+quote_refresh_ms = 500
+health_check_interval_secs = 5
+market_discovery_interval_secs = 15
+
+[alerting]
+enabled = true                        # LIVE: Telegram alerts ON
+max_alerts_per_5min = 5
+
+# ── V2-specific parameters ──────────────────────────────────────────
+[v2]
+# Fair-value pricing
+target_combined = "0.97"
+min_bid = "0.04"
+
+# Combined cost kill switch
+max_combined_avg_cost = "1.02"
+
+# Light-side combined cost guard
+light_side_max_combined = "1.02"
+
+# Merge profit floor
+merge_min_profit_per_pair = "0.005"
+
+# Position balancing
+max_share_imbalance = "150"           # MUST be > base_order_shares (15)
+imbalance_skew_per_share = "0.008"
+
+# Volatility filter
+min_vol_per_sec = "0.00001"
+vol_window_secs = 120
+
+# Sell-back engine (disabled for this baseline; top-wallet sell-back behavior varies)
+sellback_edge = "0.01"
+sellback_min_excess = "99999"
+sell_level_size = "15"
+sell_levels = 4
+
+# Exit escalation policy (Phase 1 tuned)
+exit_soft_excess = "40"
+exit_hard_excess = "60"
+exit_taker_after_secs = 12
+exit_force_taker_remaining_secs = 15
+ev_log_cooldown_secs = 5
+pair_completion_retry_secs = 5
+pair_completion_max_attempts = 8
+
+# Sizing & ladder shape
+base_order_shares = "15"
+ladder_levels = 15
+ladder_size_decay = "0.10"
+
+# Quote refresh
+quote_refresh_ms = 1000
+
+# ── V2 Risk Improvements ──────────────────────────────────────────
+
+# EV circuit breaker (disabled — winners accept losing periods)
+ev_circuit_breaker_enabled = false
+ev_stop_buying_ratio = "0.7"
+ev_min_excess_threshold = "5.0"
+ev_early_period_multiplier = "3.0"
+ev_early_period_end_pct = 0.50
+
+# FV dead-zone
+fv_dead_threshold = "0.10"
+min_bid_absolute_floor = "0.02"
+min_bid_fv_ratio = "0.5"
+
+# Time-decaying imbalance
+imbalance_decay_floor_abs = "100"     # MUST be > base_order_shares (15)
+imbalance_decay_floor_soft = "3"
+very_late_phase_secs = 300
+
+# Anti-oscillation
+postonly_regen_buffer_ticks = 3        # Validated: 688 periods at 3 ticks. Was 5 (too conservative — kills fillability).
+sell_buy_cooldown_secs = 20
+
+# Sell-back grace period
+sellback_grace_period_secs = 15
+sellback_protect_locked_profit = false
+sellback_max_loss_cents = "0.05"
+
+# Trending market detection (Phase 1: duration-aware)
+trend_window_secs = 30
+trend_threshold_dollars = 75.0
+trend_threshold_5m = 25.0
+trend_threshold_15m = 75.0
+
+# Post-anchoring inventory skew (Phase 1)
+post_anchor_skew_enabled = true
+skew_activation_threshold = "15"
+shares_per_skew_tick = "5"
+max_skew_ticks = 15
+
+# Price-shock fast-path wakeup (Phase 1)
+price_shock_threshold_5m = 15.0
+price_shock_threshold_15m = 40.0
+price_shock_use_cancel_all = false     # LIVE SAFETY: cancel-all is per-asset now, but normal stale-order logic in quote cycle handles repricing. Avoids cancel churn on 15m markets triggered by 5m thresholds.
+
+# Duration-aware ladder levels (Phase 1)
+ladder_levels_5m = 5
+ladder_levels_15m = 10                 # Validated: 15-min = $7.86/period, Sharpe comparable. Was 0 (disabled) during BTC latency test.
+
+# FV-stale cancel
+fv_stale_cancel_cents = "0.08"         # Match validated baseline. Was 0.12 (too passive — stale orders linger).
+
+# Sigma blending
+sigma_blend_alpha = "0.4"
+
+# Volatility circuit breaker
+max_sigma = 0.00020
+max_sigma_resume_factor = 0.85
+
+# Fee-aware pair completion
+pair_fee_buffer = "0.03"
+
+# Ladder churn reduction
+ladder_reprice_threshold = "0.03"
+
+# One-sided position guard
+one_sided_threshold = "300"           # MUST be > base_order_shares (15)
+
+# Period-level risk caps
+period_gross_buy_cap_usdc = "100.0"   # LIVE: canary=$50 but need room for 5m+15m concurrent. Cap relaxed from 75 to allow pair completion.
+early_phase_pct = 0.05
+early_phase_gross_buy_cap_usdc = "75.0"   # LIVE: was $50. Relaxed for 5m+15m concurrent. Still under canary.
+period_worst_case_loss_cap_usdc = "12.0"
+single_order_notional_cap_usdc = "12.5"
+period_pair_quality_min_pairs = "20"
+period_pair_quality_max_combined = "1.10"
+period_pair_quality_resume_combined = "1.05"
+pair_ratio_eval_min_total_shares = "60"
+period_min_pair_ratio_for_heavy_add = 0.35
+
+# Hybrid FV
+fv_book_blend_weight = "0.50"
+
+# Late-entry guard
+min_period_remaining_pct = 0.60
+
+# Trading window
+trading_window_start_pct = 0.05
+trading_window_end_pct = 0.85
+wind_down_allow_pair_completion = true
+
+# Market duration filter
+allowed_durations = [5, 15]
+
+# Sigma warm-up
+min_sigma_samples = 20
+
+# Market warmup
+market_warmup_secs = 3
+
+# Circuit breakers
+max_orders_per_minute = 400
+kill_file_path = "/tmp/gabagool_kill"
+
+# ── Safety Guards ────────────────────────────────────────────────
+asset_guard_enabled = true
+asset_guard_window_periods = 6
+asset_guard_min_fill_rate = 0.15
+asset_guard_min_rolling_pnl = "-2.0"
+asset_guard_pause_secs = 600
+
+churn_breaker_enabled = true
+churn_breaker_min_orders = 20
+churn_breaker_cancel_ratio = 0.60
+churn_breaker_reprice_multiplier = 3
+churn_breaker_keep_levels = 1
+
+emergency_sell_cooldown_secs = 12
+
+# Merge (disabled — hold to resolution)
+merge_at_closing = false
+
+# ── Dynamic Rebalancing ──────────────────────────────────────────
+rebalance_budget_override = true
+rebalance_max_extra_budget = "25"
+rebalance_size_multiplier = 2
+
+# ── Continuous Merge (disabled) ──────────────────────────────────
+continuous_merge_enabled = false
+merge_interval_secs = 30
+merge_min_pairs = 15
+merge_reserve_pairs = 3
+
+# ── VPIN Toxic Flow Detection ──────────────────────────────────────
+vpin_enabled = false
+vpin_bucket_volume = 100.0
+vpin_n_buckets = 50
+vpin_widen_threshold = 0.50
+vpin_pullback_threshold = 0.70
+vpin_max_spread_multiplier = 3.0
+
+# ── Avellaneda-Stoikov Volatility-Scaled Skew ─────────────────────
+as_skew_enabled = false
+as_gamma = 0.1
+
+# ── Continuous Liquidity Tapering ─────────────────────────────────
+taper_enabled = false
+taper_min_factor = 0.10
+
+# ── Randomized Skew Noise ─────────────────────────────────────────
+skew_noise_enabled = false
+skew_noise_amplitude = 0.3
+
+# ── On-chain Contract Addresses ──────────────────────────────────
+[onchain]
+usdc_address = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+ctf_exchange_address = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E"
+neg_risk_ctf_exchange_address = "0xC5d563A36AE78145C45a50134d48A1215220f80a"
+
+# ── Per-Asset Configuration ──────────────────────────────────────
+# BTC-only latency test. Canary: $50 max, escalates to $200 after 10 consecutive winners.
+# Enable other coins after BTC live performance is confirmed.
+
+[btc]
+enabled = true
+budget = "200.00"                     # Full budget after canary. Sharpe 0.626, $7.70/period paper.
+ladder_levels = 15                    # LIVE: was 20. Reduce unfillable deep levels — period 1 had 7.7% fill rate (8/104 orders).
+
+[eth]
+enabled = false                       # DISABLED: enable after BTC live validation. Paper Sharpe 0.478.
+budget = "150.00"
+# ladder_levels uses default from [v2]
+
+[sol]
+enabled = false                       # DISABLED: weakest coin (Sharpe 0.438, negative at 8AM). Enable last.
+budget = "100.00"
+max_sigma = 0.00050
+base_order_shares = "10"
+ladder_levels = 10
+
+[xrp]
+enabled = false                       # DISABLED: Sharpe 0.521 but 153 orders/period churn. Enable after BTC+ETH.
+budget = "100.00"
+max_sigma = 0.00040
+base_order_shares = "10"
+ladder_levels = 8

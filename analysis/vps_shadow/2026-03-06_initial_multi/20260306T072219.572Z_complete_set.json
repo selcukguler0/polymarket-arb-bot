@@ -1,0 +1,36 @@
+{
+  "run_id": "20260306T072219.572Z_complete_set",
+  "started_at": "2026-03-06T07:22:19.572Z",
+  "mode": "shadow",
+  "wallet_address": "shadow-observer-vps",
+  "config_path": "config/complete_set_shadow_xrp.toml",
+  "config_hash": "e122e8848d07e51cfa8f7a2554c3dffe54b7573903a1e79e5c97b3f66eb86bd0",
+  "git_sha": "5451b5e1216f9eb07217143c49504d104c095d29",
+  "eoa_mode": true,
+  "enabled_assets": [
+    "XRP"
+  ],
+  "enabled_durations": [
+    5
+  ],
+  "asset_profiles": [],
+  "strategy_label": "complete_set",
+  "complete_set_profile": {
+    "asset": "XRP",
+    "allowed_durations": [
+      5
+    ],
+    "trading_window_start_pct": 0.03,
+    "trading_window_end_pct": 0.95,
+    "poll_interval_ms": 500,
+    "discovery_interval_secs": 5,
+    "long_enabled": true,
+    "short_enabled": true,
+    "max_long_combined_ask": "0.98",
+    "min_short_combined_bid": "1.02",
+    "fee_buffer": "0.01",
+    "cooldown_secs": 5,
+    "pairs_per_trade": "10",
+    "max_trades_per_period": 12
+  }
+}

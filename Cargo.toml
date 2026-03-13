@@ -1,0 +1,101 @@
+[package]
+name = "polymarket-arb"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+
+[dependencies]
+# Polymarket SDK — the foundation
+polymarket-client-sdk = { version = "0.4", features = [
+    "clob",
+    "ws",
+    "gamma",
+    "data",
+    "ctf",
+    "heartbeats",
+    "tracing",
+    "rtds",
+] }
+
+# On-chain interaction (for balance checks, approvals, gas estimation)
+alloy = { version = "1.6", features = [
+    "full",
+    "signer-local",
+    "provider-http",
+    "contract",
+] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+futures-util = "0.3"
+
+# Decimal math (SDK re-exports, but we need our own)
+rust_decimal = "1.40"
+rust_decimal_macros = "1.40"
+
+# Database
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+hmac = "0.12"
+toml = "0.8"
+dotenvy = "0.15"
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Concurrency
+parking_lot = "0.12"
+
+# HTTP for Telegram alerts (blocking, on dedicated thread)
+ureq = { version = "3", features = ["json"] }
+
+# Async HTTP for relayer client
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+
+# WebSocket client (for standalone Binance monitor)
+tokio-tungstenite = { version = "0.26", features = ["rustls-tls-webpki-roots"] }
+
+# TLS crypto provider (needed by SDK's WS client via rustls)
+rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs"] }
+
+# TUI dashboard (optional, kept for reference)
+ratatui = "0.29"
+crossterm = "0.28"
+
+# Web dashboard
+axum = "0.7"
+tokio-stream = "0.1"
+
+# Encoding (CLOB cursor is base64-encoded)
+base64 = "0.22"
+
+# Randomized skew noise
+rand = "0.9"
+
+# Memory allocator
+tikv-jemallocator = "0.6"
+
+# Metrics / observability
+metrics = "0.24"
+metrics-exporter-prometheus = "0.16"
+
+[dev-dependencies]
+proptest = "1"
+
+[profile.release]
+overflow-checks = true
+lto = true
+strip = "symbols"

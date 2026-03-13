@@ -1,0 +1,29 @@
+[Unit]
+Description=Polymarket Complete-Set Arbitrage Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=polymarket
+Group=polymarket
+WorkingDirectory=/opt/polymarket-bot
+ExecStart=/opt/polymarket-bot/polymarket-arb config/live.toml
+EnvironmentFile=/opt/polymarket-bot/.env
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/polymarket-bot
+
+# Resource limits
+MemoryMax=2G
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

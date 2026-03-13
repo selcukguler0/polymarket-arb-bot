@@ -1,0 +1,208 @@
+# 5m drain-exec shadow profile.
+# This profile keeps the drain-first shape but makes exit execution the
+# primary objective: earlier drain pressure, single-level maker exits, and a
+# shorter path to taker reduction.
+
+[general]
+mode = "shadow"
+db_path = "data/polymarket-arb-shadow-drain-exec.db"
+eoa_mode = true
+canary_mode = false
+canary_budget = "20"
+canary_periods = 99999
+
+[strategy]
+min_profit_threshold = "0.02"
+max_combined_bid = "0.98"
+order_size_usdc = "10.00"
+max_orders_per_side = 3
+ticks_below_mid = 2
+aggressiveness = "0.5"
+
+[risk]
+max_position_per_market = "60.00"
+max_total_exposure = "120.00"
+max_imbalance_ratio = "0.55"
+pause_imbalance_ratio = "0.65"
+emergency_imbalance_ratio = "0.75"
+daily_loss_limit = "50.00"
+resolution_safety_margin_secs = 20
+
+[timing]
+max_book_age_ms = 1500
+quote_refresh_ms = 500
+health_check_interval_secs = 5
+market_discovery_interval_secs = 5
+
+[alerting]
+enabled = false
+max_alerts_per_5min = 5
+
+[v2]
+target_combined = "0.95"
+min_bid = "0.04"
+max_combined_avg_cost = "1.00"
+light_side_max_combined = "1.02"
+merge_min_profit_per_pair = "0.005"
+
+max_share_imbalance = "8"
+imbalance_skew_per_share = "0.008"
+
+min_vol_per_sec = "0.00001"
+vol_window_secs = 120
+
+sellback_edge = "0.00"
+sellback_min_excess = "99999"
+sell_level_size = "5"
+sell_levels = 1
+
+exit_soft_excess = "5"
+exit_hard_excess = "8"
+exit_taker_after_secs = 6
+exit_force_taker_remaining_secs = 90
+ev_log_cooldown_secs = 5
+pair_completion_retry_secs = 2
+pair_completion_max_attempts = 20
+
+base_order_shares = "5"
+ladder_levels = 6
+ladder_size_decay = "0.00"
+quote_refresh_ms = 500
+
+ev_circuit_breaker_enabled = false
+ev_stop_buying_ratio = "0.7"
+ev_min_excess_threshold = "5.0"
+ev_early_period_multiplier = "3.0"
+ev_early_period_end_pct = 0.50
+
+fv_dead_threshold = "0.10"
+min_bid_absolute_floor = "0.02"
+min_bid_fv_ratio = "0.5"
+
+imbalance_decay_floor_abs = "8"
+imbalance_decay_floor_soft = "3"
+very_late_phase_secs = 90
+
+postonly_regen_buffer_ticks = 3
+sell_buy_cooldown_secs = 15
+
+sellback_grace_period_secs = 8
+sellback_protect_locked_profit = false
+sellback_max_loss_cents = "0.10"
+
+trend_window_secs = 30
+trend_threshold_dollars = 250.0
+trend_threshold_5m = 250.0
+trend_threshold_15m = 300.0
+trend_threshold_60m = 500.0
+
+post_anchor_skew_enabled = true
+skew_activation_threshold = "5"
+shares_per_skew_tick = "5"
+max_skew_ticks = 15
+
+price_shock_threshold_5m = 15.0
+price_shock_threshold_15m = 40.0
+price_shock_threshold_60m = 100.0
+price_shock_use_cancel_all = false
+
+ladder_levels_5m = 6
+ladder_levels_15m = 2
+ladder_levels_60m = 4
+buy_level_activation_limit_5m = 1
+
+fv_stale_cancel_cents = "0.05"
+sigma_blend_alpha = "0.4"
+max_sigma = 0.00020
+max_sigma_resume_factor = 0.85
+pair_fee_buffer = "0.03"
+ladder_reprice_threshold = "0.03"
+
+one_sided_threshold = "8"
+
+period_gross_buy_cap_usdc = "45.0"
+early_phase_pct = 0.10
+early_phase_gross_buy_cap_usdc = "15.0"
+period_worst_case_loss_cap_usdc = "4.0"
+single_order_notional_cap_usdc = "4.0"
+period_pair_quality_min_pairs = "12"
+period_pair_quality_max_combined = "1.05"
+period_pair_quality_resume_combined = "1.01"
+pair_ratio_eval_min_total_shares = "12"
+period_min_pair_ratio_for_heavy_add = 0.60
+
+fv_book_blend_weight = "0.50"
+min_period_remaining_pct = 0.90
+
+trading_window_start_pct = 0.03
+trading_window_end_pct = 0.95
+wind_down_allow_pair_completion = true
+
+allowed_durations = [5]
+min_sigma_samples = 20
+market_warmup_secs = 2
+
+max_orders_per_minute = 240
+kill_file_path = "/tmp/gabagool_shadow_drain_exec_kill"
+
+asset_guard_enabled = false
+asset_guard_window_periods = 6
+asset_guard_min_fill_rate = 0.15
+asset_guard_min_rolling_pnl = "-2.0"
+asset_guard_pause_secs = 600
+
+churn_breaker_enabled = true
+churn_breaker_min_orders = 20
+churn_breaker_cancel_ratio = 0.60
+churn_breaker_reprice_multiplier = 3
+churn_breaker_keep_levels = 4
+
+emergency_sell_cooldown_secs = 12
+merge_at_closing = false
+
+rebalance_budget_override = true
+rebalance_max_extra_budget = "6"
+rebalance_size_multiplier = 1
+
+continuous_merge_enabled = false
+merge_interval_secs = 30
+merge_min_pairs = 15
+merge_reserve_pairs = 3
+
+vpin_enabled = false
+vpin_bucket_volume = 30.0
+vpin_n_buckets = 10
+vpin_widen_threshold = 0.50
+vpin_pullback_threshold = 0.70
+vpin_max_spread_multiplier = 3.0
+
+as_skew_enabled = false
+as_gamma = 0.1
+
+taper_enabled = false
+taper_min_factor = 0.10
+
+skew_noise_enabled = false
+skew_noise_amplitude = 0.3
+
+[onchain]
+usdc_address = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+ctf_exchange_address = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E"
+neg_risk_ctf_exchange_address = "0xC5d563A36AE78145C45a50134d48A1215220f80a"
+
+[btc]
+enabled = true
+budget = "60.00"
+ladder_levels = 6
+
+[eth]
+enabled = false
+budget = "0"
+
+[sol]
+enabled = false
+budget = "0"
+
+[xrp]
+enabled = false
+budget = "0"

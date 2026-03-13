@@ -1,0 +1,18 @@
+[Unit]
+Description=Polymarket Codex controller
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=botuser
+WorkingDirectory=/home/botuser/polymarket-bot-agent
+Environment=POLYMARKET_ORC_HOST=vps
+Environment=POLYMARKET_ORC_RUNTIME_WORKSPACE=/home/botuser/polymarket-bot-runtime
+Environment=POLYMARKET_ORC_AGENT_WORKSPACE=/home/botuser/polymarket-bot-agent
+ExecStart=/bin/bash -lc './job-orc/run.sh controller --loop'
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,36 @@
+# Daily Prediction Pair-Arb Strategy Config
+#
+# Buy both Yes+No tokens on daily BTC/ETH prediction markets
+# when combined ask < $1.00, then redeem at $1.00 per pair.
+
+# Maximum combined cost (Yes ask + No ask) to enter a pair.
+# 0.97 = need at least 3% margin to trade.
+max_combined_cost = 0.97
+
+# Minimum margin per pair to consider worthwhile.
+min_margin = 0.03
+
+# Shares to buy per side per trade.
+order_size = 100
+
+# Maximum total matched pairs across all markets.
+max_total_pairs = 2000
+
+# Book polling interval (ms).
+poll_interval_ms = 5000
+
+# Market discovery interval (seconds).
+market_discovery_secs = 60
+
+# Redemption sweep interval (seconds).
+redeem_interval_secs = 300
+
+# Minimum available book depth on both sides.
+min_book_size = 10
+
+# Minimum hours until resolution to trade.
+# Skip markets about to resolve (slippage risk).
+min_hours_to_resolution = 1.0
+
+# Which coins to trade.
+coins = ["bitcoin", "ethereum"]

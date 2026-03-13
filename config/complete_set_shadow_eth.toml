@@ -1,0 +1,28 @@
+[general]
+mode = "shadow"
+eoa_mode = true
+
+[complete_set]
+asset = "ETH"
+poll_interval_ms = 500
+market_discovery_interval_secs = 5
+trading_window_start_pct = 0.03
+trading_window_end_pct = 0.95
+allowed_durations = [5]
+
+max_long_combined_ask = "0.98"
+min_short_combined_bid = "1.02"
+fee_buffer = "0.01"
+cooldown_secs = 5
+pairs_per_trade = "10"
+max_trades_per_period = 12
+
+long_enabled = true
+short_enabled = true
+merge_enabled = true
+split_enabled = true
+
+[onchain]
+usdc_address = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+ctf_exchange_address = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E"
+neg_risk_ctf_exchange_address = "0xC5d563A36AE78145C45a50134d48A1215220f80a"

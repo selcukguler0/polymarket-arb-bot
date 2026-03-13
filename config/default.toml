@@ -1,0 +1,30 @@
+[general]
+mode = "paper"  # "paper" or "live"
+db_path = "data/polymarket-arb.db"
+
+[strategy]
+min_profit_threshold = "0.02"    # Minimum guaranteed profit per pair ($0.02)
+max_combined_bid = "0.98"        # Max YES+NO combined bid
+order_size_usdc = "2.00"         # USDC per order
+max_orders_per_side = 3          # Max resting orders per outcome per market
+ticks_below_mid = 2              # How far below midpoint to place bids
+aggressiveness = "0.5"           # 0.0 ultra conservative to 1.0 max edge
+
+[risk]
+max_position_per_market = "10.00"  # Max USDC exposed per market
+max_total_exposure = "30.00"      # Max USDC across all markets
+max_imbalance_ratio = "0.60"        # Max heavy_side / total
+pause_imbalance_ratio = "0.70"      # Pause quoting overweight side
+emergency_imbalance_ratio = "0.80"  # Actively sell excess
+daily_loss_limit = "5.00"          # Shut down for the day
+resolution_safety_margin_secs = 120 # Cancel all this many seconds before resolution
+
+[timing]
+max_book_age_ms = 500             # Discard orderbook data older than this
+quote_refresh_ms = 1000           # How often to recalculate quotes
+health_check_interval_secs = 5    # Health check frequency
+market_discovery_interval_secs = 30  # How often to poll for new markets
+
+[alerting]
+enabled = false
+max_alerts_per_5min = 5

@@ -1,0 +1,45 @@
+# Post-Resolution Pair Completion Strategy Configuration
+#
+# After a 5-min BTC Up/Down period resolves, buy both Up+Down tokens
+# at combined cost < $1.00, then redeem matched pairs for $1.00.
+#
+# Override via env vars: PR_MAX_COMBINED_COST, PR_MIN_MARGIN, PR_ORDER_SIZE,
+# PR_MAX_TOTAL_PAIRS, PR_POLL_MS, PR_MAX_POST_RES_SECS, PR_MIN_POST_RES_SECS
+
+[strategy]
+# Maximum combined cost (Up ask + Down ask) to enter a pair.
+# At 0.95, we need 5% margin minimum. Queue-racers get 0.63-0.76.
+max_combined_cost = "0.95"
+
+# Minimum profit margin per pair after fees.
+# 0.02 = 2% minimum. Taker fees can be up to 3.15% at 50c.
+min_margin = "0.02"
+
+# Shares to buy per side per trade.
+order_size = "50"
+
+# Maximum total matched pairs across all active positions.
+max_total_pairs = "500"
+
+[timing]
+# Poll interval for book checks (milliseconds).
+poll_interval_ms = 2000
+
+# Market discovery interval (seconds).
+market_discovery_secs = 10
+
+# Window after resolution to consider buying (seconds).
+# Books thin out fast — after 300s there's usually nothing left.
+max_post_resolution_secs = 300
+
+# Minimum delay after resolution before buying (seconds).
+# Set >0 to avoid competing with queue-racers (5-7s).
+# Set 0 to try immediately.
+min_post_resolution_secs = 10
+
+# Redemption sweep interval (seconds).
+redeem_interval_secs = 120
+
+[markets]
+# Which period durations to scan (minutes). 5 = 5-minute periods.
+allowed_durations = [5]

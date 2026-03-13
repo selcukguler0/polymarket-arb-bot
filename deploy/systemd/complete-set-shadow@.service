@@ -1,0 +1,16 @@
+[Unit]
+Description=Polymarket complete-set shadow observer (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=botuser
+WorkingDirectory=/home/botuser/polymarket-bot-runtime
+Environment=CODEX_HOME=/home/botuser/.codex
+ExecStart=/bin/bash -lc './scripts/run_complete_set_shadow_worker.sh %i'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

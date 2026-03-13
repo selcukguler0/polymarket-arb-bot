@@ -1,0 +1,29 @@
+# Deep Discount Maker — 0xd0d605-style two-sided market making
+# Places wide grid bids on both Up+Down, accepts directional risk,
+# sells excess inventory, holds to resolution.
+
+# Price grid
+grid_min_price = 0.05        # Lowest bid level
+grid_max_price = 0.50        # Highest bid level
+grid_step = 0.05             # Step between levels (10 levels at 5c step)
+shares_per_level = 15        # Shares per bid level per side
+
+# Timing
+entry_delay_secs = 5         # Wait after period start before placing
+stop_new_orders_secs = 60    # Stop placing new orders this many secs before end
+cancel_all_secs = 30         # Cancel all resting this many secs before end
+
+# Inventory management (mid-period selling)
+sell_enabled = true
+sell_imbalance_threshold = 50  # Sell when |up - down| > this
+sell_cooldown_secs = 5         # Min time between sells
+sell_max_loss_per_share = 0.30 # Max loss below avg_cost to accept on sell
+
+# Markets
+durations = [5]              # 5m primary (78% win rate vs 58% on 15m)
+coins = ["BTC"]              # Start with BTC only
+
+# Risk
+max_position_per_side = 300  # Max shares per side per market
+max_total_spend = 200.0      # Max USDC spend per market
+dry_run = true               # Paper mode by default

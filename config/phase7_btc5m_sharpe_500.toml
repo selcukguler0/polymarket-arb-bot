@@ -1,0 +1,226 @@
+# Phase 7 Sharpe-first launch profile for a ~$500 bankroll.
+# This profile is paper-safe by default. Switch `mode = "live"` only after
+# validating fills, inventory behavior, and rate/fee handling in paper/shadow.
+#
+# Implemented runtime mapping:
+# - BTC-only, 5m-only market selection
+# - 5s 5m warmup after market open
+# - buy ladder anchored to best bid / best bid - 1 tick
+# - daily + session loss stops
+# - Phase 6 directional size skew from spot / flow / book imbalance
+#
+# Set `directional_skew_enabled = false` below to flip back to a symmetric profile
+# without rebuilding the bot.
+
+[general]
+mode = "paper"
+db_path = "data/polymarket-arb.db"
+eoa_mode = true
+canary_mode = false
+canary_periods = 99999
+
+[strategy]
+min_profit_threshold = "0.01"
+max_combined_bid = "0.99"
+order_size_usdc = "5.00"
+max_orders_per_side = 2
+ticks_below_mid = 1
+aggressiveness = "0.50"
+
+[risk]
+max_position_per_market = "60.00"
+max_total_exposure = "225.00"
+max_imbalance_ratio = "0.60"
+pause_imbalance_ratio = "0.70"
+emergency_imbalance_ratio = "0.80"
+daily_loss_limit = "10.00"
+session_loss_limit = "5.00"
+resolution_safety_margin_secs = 15
+
+[timing]
+max_book_age_ms = 1500
+quote_refresh_ms = 2000
+health_check_interval_secs = 5
+market_discovery_interval_secs = 10
+
+[alerting]
+enabled = false
+max_alerts_per_5min = 5
+
+[v2]
+target_combined = "0.97"
+min_bid = "0.02"
+max_combined_avg_cost = "0.99"
+light_side_max_combined = "0.99"
+merge_min_profit_per_pair = "0.00"
+
+max_share_imbalance = "18.0"
+soft_imbalance_threshold = "10.0"
+imbalance_skew_per_share = "0.004"
+
+min_vol_per_sec = "0.00001"
+vol_window_secs = 120
+
+sellback_edge = "0.01"
+sellback_min_excess = "99999"
+sell_level_size = "12"
+sell_levels = 2
+
+exit_soft_excess = "12.0"
+exit_hard_excess = "18.0"
+exit_taker_after_secs = 8
+exit_force_taker_remaining_secs = 15
+ev_log_cooldown_secs = 5
+pair_completion_retry_secs = 5
+pair_completion_max_attempts = 6
+
+base_order_shares = "12"
+ladder_levels = 2
+ladder_levels_5m = 2
+ladder_size_decay = "0.33"
+quote_refresh_ms = 2000
+
+ev_circuit_breaker_enabled = false
+ev_stop_buying_ratio = "0.7"
+ev_min_excess_threshold = "2.0"
+ev_early_period_multiplier = "1.0"
+ev_early_period_end_pct = 0.25
+
+fv_dead_threshold = "0.02"
+min_bid_absolute_floor = "0.02"
+min_bid_fv_ratio = "0.4"
+
+imbalance_decay_floor_abs = "12.0"
+imbalance_decay_floor_soft = "6.0"
+very_late_phase_secs = 15
+
+postonly_regen_buffer_ticks = 1
+sell_buy_cooldown_secs = 15
+
+sellback_grace_period_secs = 300
+sellback_protect_locked_profit = true
+sellback_max_loss_cents = "0.05"
+
+trend_window_secs = 60
+trend_threshold_dollars = 0.0
+trend_threshold_5m = 0.0
+trend_threshold_15m = 0.0
+trend_threshold_60m = 0.0
+
+post_anchor_skew_enabled = false
+skew_activation_threshold = "18"
+shares_per_skew_tick = "9"
+max_skew_ticks = 2
+
+price_shock_threshold_5m = 15.0
+price_shock_threshold_15m = 40.0
+price_shock_threshold_60m = 100.0
+price_shock_use_cancel_all = false
+
+buy_level_activation_limit_5m = 2
+best_bid_anchor_5m = true
+fv_stale_cancel_cents = "0.05"
+directional_skew_enabled = true
+directional_skew_mild_start_secs = 60
+directional_skew_strong_start_secs = 30
+directional_skew_terminal_start_secs = 15
+directional_skew_flow_window_secs = 60
+directional_skew_short_flow_window_secs = 15
+directional_skew_spot_ret_threshold_bps = 6.0
+directional_skew_flow_threshold_usdc = "4000"
+directional_skew_large_trade_min_usdc = "50"
+directional_skew_large_flow_threshold_usdc = "3000"
+directional_skew_short_flow_threshold_usdc = "1100"
+directional_skew_terminal_imbalance_diff_threshold = "1.5"
+directional_skew_terminal_best_imbalance_threshold = "0.75"
+directional_skew_mild_favored_multiplier = "1.25"
+directional_skew_mild_unfavored_multiplier = "0.75"
+directional_skew_strong_favored_multiplier = "1.50"
+directional_skew_strong_unfavored_multiplier = "0.50"
+directional_skew_terminal_favored_multiplier = "1.75"
+directional_skew_terminal_unfavored_multiplier = "0.25"
+directional_skew_terminal_cancel_deepest_unfavored = true
+
+sigma_blend_alpha = "0.4"
+max_sigma = 0.00025
+max_sigma_resume_factor = 0.85
+
+pair_fee_buffer = "0.02"
+ladder_reprice_threshold = "0.01"
+one_sided_threshold = "18.0"
+
+period_gross_buy_cap_usdc = "60.0"
+early_phase_pct = 0.10
+early_phase_gross_buy_cap_usdc = "45.0"
+period_worst_case_loss_cap_usdc = "18.0"
+single_order_notional_cap_usdc = "6.0"
+period_pair_quality_min_pairs = "10"
+period_pair_quality_max_combined = "1.00"
+period_pair_quality_resume_combined = "0.99"
+pair_ratio_eval_min_total_shares = "24"
+period_min_pair_ratio_for_heavy_add = 0.50
+
+fv_book_blend_weight = "0.50"
+min_sigma_samples = 10
+min_period_remaining_pct = 0.95
+
+trading_window_start_pct = 0.0167
+trading_window_end_pct = 0.95
+wind_down_allow_pair_completion = true
+
+allowed_durations = [5]
+merge_at_closing = false
+
+rebalance_budget_override = true
+rebalance_max_extra_budget = "6.0"
+rebalance_size_multiplier = 1
+
+continuous_merge_enabled = false
+merge_interval_secs = 30
+merge_min_pairs = 10
+merge_reserve_pairs = 0
+
+market_warmup_secs = 3
+market_warmup_secs_5m = 5
+max_orders_per_minute = 120
+kill_file_path = "/tmp/gabagool_kill"
+
+asset_guard_enabled = true
+asset_guard_window_periods = 6
+asset_guard_min_fill_rate = 0.10
+asset_guard_min_rolling_pnl = "-2.0"
+asset_guard_pause_secs = 600
+
+churn_breaker_enabled = true
+churn_breaker_min_orders = 20
+churn_breaker_cancel_ratio = 0.60
+churn_breaker_reprice_multiplier = 2
+churn_breaker_keep_levels = 1
+
+emergency_sell_cooldown_secs = 12
+
+enable_5m_markets = true
+vpin_enabled = false
+as_skew_enabled = false
+taper_enabled = false
+skew_noise_enabled = false
+
+deep_ladder_tick_spacing = 1
+deep_ladder_start_level = 1
+sell_unmatched_enabled = false
+deep_static_grid_enabled = false
+fv_cancel_min_price = "0.15"
+deep_level_stale_distance = 15
+
+[btc]
+enabled = true
+budget = "60"
+
+[eth]
+enabled = false
+
+[sol]
+enabled = false
+
+[xrp]
+enabled = false

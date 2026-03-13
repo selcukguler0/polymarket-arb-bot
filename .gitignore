@@ -1,0 +1,25 @@
+/target
+.env
+data/
+*.db
+*.db-wal
+*.db-shm
+logs/
+logs.log
+oldlogs/
+__pycache__/
+*.pyc
+logs_paper/
+logs_shadow/
+logs_complete_set_shadow/
+
+# Sensitive data — do not commit
+memory/memory-data/
+analysis/wallet_reverse_engineering/
+job-orc/reports/
+job-orc/runs/
+job-orc/knowledge/
+job-orc/memory/
+archive/
+convergence_trades_*.csv
+deploy.sh
