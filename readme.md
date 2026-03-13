@@ -153,10 +153,10 @@ If this code, research, or the honest post-mortem saved you time or money — co
 
 | Coin | Network | Address |
 |------|---------|---------|
-| **USDC** | Polygon | `YOUR_POLYGON_ADDRESS` |
-| **ETH** | Ethereum | `YOUR_ETH_ADDRESS` |
-| **BTC** | Bitcoin | `YOUR_BTC_ADDRESS` |
-| **SOL** | Solana | `YOUR_SOL_ADDRESS` |
+| **USDC** | Polygon | `0x2b000df8b49b5ce2db95ab3f258a23004059a60b` |
+| **ETH** | Ethereum | `0x2b000df8b49b5ce2db95ab3f258a23004059a60b` |
+| **BTC** | Bitcoin | `16ajV62pezW9cUyN68JVBj9R1zCybNnPKN` |
+| **SOL** | Solana | `8uhfcwDaD1ozVck37yuc9qk1g6ggcQ3Ekf9DaitdfHuo` |
 
 ## License
 
